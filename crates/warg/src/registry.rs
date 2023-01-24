@@ -2,8 +2,8 @@ use std::fmt;
 
 use crate::{operator::OperatorRecord, package::PackageRecord, ProtoEnvelope};
 use serde::{Deserialize, Serialize};
-use warg_crypto::{Signable, ByteVisitor, prefix, VisitBytes};
 use warg_crypto::hash::{DynHash, Hash, SupportedDigest};
+use warg_crypto::{prefix, ByteVisitor, Signable, VisitBytes};
 
 use warg_crypto::prefix::VisitPrefixEncode;
 
@@ -19,7 +19,10 @@ impl Signable for MapCheckpoint {
 }
 
 impl prefix::VisitPrefixEncode for MapCheckpoint {
-    fn visit_pe<'a, BV: ?Sized + ByteVisitor>(&self, visitor: &mut prefix::PrefixEncodeVisitor<'a, BV>) {
+    fn visit_pe<'a, BV: ?Sized + ByteVisitor>(
+        &self,
+        visitor: &mut prefix::PrefixEncodeVisitor<'a, BV>,
+    ) {
         visitor.visit_str_raw("WARG-MAP-CHECKPOINT-V0");
         visitor.visit_unsigned(self.log_length as u64);
         visitor.visit_str(&self.log_root.to_string());
@@ -40,7 +43,10 @@ pub struct MapLeaf {
 }
 
 impl prefix::VisitPrefixEncode for MapLeaf {
-    fn visit_pe<'a, BV: ?Sized + ByteVisitor>(&self, visitor: &mut prefix::PrefixEncodeVisitor<'a, BV>) {
+    fn visit_pe<'a, BV: ?Sized + ByteVisitor>(
+        &self,
+        visitor: &mut prefix::PrefixEncodeVisitor<'a, BV>,
+    ) {
         visitor.visit_str_raw("WARG-MAP-LEAF-V0");
         visitor.visit_str(&self.record_id.0.to_string());
     }
@@ -53,14 +59,17 @@ impl VisitBytes for MapLeaf {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LogLeaf {
     pub log_id: LogId,
     pub record_id: RecordId,
 }
 
 impl prefix::VisitPrefixEncode for LogLeaf {
-    fn visit_pe<'a, BV: ?Sized + ByteVisitor>(&self, visitor: &mut prefix::PrefixEncodeVisitor<'a, BV>) {
+    fn visit_pe<'a, BV: ?Sized + ByteVisitor>(
+        &self,
+        visitor: &mut prefix::PrefixEncodeVisitor<'a, BV>,
+    ) {
         visitor.visit_str_raw("WARG-LOG-LEAF-V0");
         visitor.visit_str(&self.log_id.0.to_string());
         visitor.visit_str(&self.record_id.0.to_string());
@@ -74,7 +83,8 @@ impl VisitBytes for LogLeaf {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct LogId(DynHash);
 
 impl LogId {
@@ -97,19 +107,8 @@ impl VisitBytes for LogId {
     }
 }
 
-impl Into<DynHash> for LogId {
-    fn into(self) -> DynHash {
-        self.0
-    }
-}
-
-impl AsRef<[u8]> for LogId {
-    fn as_ref(&self) -> &[u8] {
-        self.0.bytes()
-    }
-}
-
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct RecordId(DynHash);
 
 impl RecordId {
